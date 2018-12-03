@@ -45,7 +45,7 @@ router.use(function(req, res, next) {
         if(err) {
           return next(err);
         } else if(!user) {
-          err = new Error('Please log in');
+          err = new Error('Please log in with your email');
           err.status = 401;
           return next(err);
         }
