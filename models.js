@@ -3,9 +3,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
-
-const Schema = mongoose.Schema,
-    ObjectId = Schema.ObjectId;
+const Schema = mongoose.Schema;
 
 const UserSchema = new Schema({
   firstName: {
@@ -27,8 +25,9 @@ const UserSchema = new Schema({
 });
 
 const CourseSchema = new Schema({
-  firstName: {
-    type: String
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   },
   title: {
     type: String,

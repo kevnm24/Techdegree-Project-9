@@ -7,14 +7,21 @@ const Course = require("./models").Course;
 const auth = require('basic-auth');
 const bcrypt = require('bcrypt');
 
+// GET /api
+router.get('/', (req, res) => {
+  res.json({
+    message: 'Welcome to the REST API project!',
+  });
+});
+
 // POST /api/users
 // Creates a user, sets the Location header to "/", and returns no content
 router.post('/users', function(req, res, next) {
   const user = new User(req.body);
   user.save(function(err, user){
-    if(err) return next(err);
-    res.status(201);
-    res.json(user);
+    if(err) return next();
+    res.location('/');
+    res.sendStatus(201);
   });
 });
 
@@ -63,20 +70,13 @@ router.use(function(req, res, next) {
     }
 });
 
-// GET /api
-router.get('/', (req, res) => {
-  res.json({
-    message: 'Welcome to the REST API project!',
-  });
-});
-
 // GET /api/users
 // Returns the currently authenticated user
 router.get("/users", function(req, res, next) {
   User.find({})
-  .exec(function(err, users){
+  .exec(function(err, user){
       if(err) return next(err);
-      res.json(users);
+      res.json(req.user);
     });
 });
 
@@ -99,29 +99,41 @@ router.post('/courses', function(req, res, next) {
   const course = new Course(req.body);
   course.save(function(err, course){
     if(err) return next(err);
-    res.status(201);
-    res.json(course);
+    res.location('/');
+    res.sendStatus(201);
   });
 });
 
 // PUT api/course/:id
 // Updates a course and returns no content
-router.put('/courses/:cID', function(req, res) {
-  req.course.update(req.body, function(err, result){
-    if(err) return next(err);
-    res.json(result);
-  });
+router.put('/courses/:cID', function(req, res, next) {
+  if (req.course.user.toString() === req.user._id.toString()) {
+      req.course.update(req.body, function(err, result){
+      if(err) return next(err);
+      return res.sendStatus(204);
+    });
+  } else {
+    const err = new Error('Sorry you can not edit course because your are not the creator.');
+    err.status = 403;
+    next(err)
+  }
 });
 
 // DELETE api/course/:id
 // Deletes a course and returns no content
-router.delete('/courses/:cID', function(req, res) {
-  req.course.remove(function(err){
-    req.course.save(function(err, course){
-      if(err) return next(err);
-      res.json(course);
+router.delete('/courses/:cID', function(req, res, next) {
+  if (req.course.user.toString() === req.user._id.toString()) {
+    req.course.remove(function(err){
+      req.course.save(function(err, course){
+        if(err) return next(err);
+        return res.sendStatus(204);
+      });
     });
-  });
+  } else {
+    const err = new Error('Sorry you can not delete course because your are not the creator.');
+    err.status = 403;
+    next(err)
+  }
 });
 
 module.exports = router;
